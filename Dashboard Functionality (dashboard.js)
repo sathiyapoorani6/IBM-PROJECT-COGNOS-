@@ -1,0 +1,104 @@
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize dashboard components
+    initDashboard();
+    
+    // Handle filter application
+    const applyBtn = document.querySelector('.btn-apply');
+    if (applyBtn) {
+        applyBtn.addEventListener('click', applyFilters);
+    }
+});
+
+function initDashboard() {
+    // You can add any dashboard initialization logic here
+    console.log('Dashboard initialized');
+    
+    // Example: Set default filter values from URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const timePeriod = urlParams.get('timePeriod');
+    const region = urlParams.get('region');
+    
+    if (timePeriod) {
+        document.getElementById('timePeriod').value = timePeriod;
+    }
+    
+    if (region) {
+        document.getElementById('region').value = region;
+    }
+}
+
+function applyFilters() {
+    const timePeriod = document.getElementById('timePeriod').value;
+    const region = document.getElementById('region').value;
+    
+    // Update the iframe URL with new filters
+    const iframe = document.querySelector('.dashboard-embed iframe');
+    if (iframe) {
+        const currentUrl = new URL(iframe.src);
+        
+        // Update URL parameters (this is a simulation - actual Cognos parameters may differ)
+        currentUrl.searchParams.set('timePeriod', timePeriod);
+        currentUrl.searchParams.set('region', region);
+        
+        // Reload iframe with new parameters
+        iframe.src = currentUrl.toString();
+    }
+    
+    // Update browser URL (without reload)
+    const newUrl = new URL(window.location);
+    newUrl.searchParams.set('timePeriod', timePeriod);
+    newUrl.searchParams.set('region', region);
+    window.history.pushState({}, '', newUrl);
+    
+    // Show notification
+    showNotification('Filters applied successfully');
+}
+
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.add('fade-out');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Add notification styles dynamically
+const notificationStyles = document.createElement('style');
+notificationStyles.textContent = `
+.notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 24px;
+    border-radius: 4px;
+    color: white;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    opacity: 1;
+    transition: opacity 0.3s;
+}
+
+.notification-success {
+    background-color: #24a148;
+}
+
+.notification-error {
+    background-color: #da1e28;
+}
+
+.notification-warning {
+    background-color: #ff832b;
+}
+
+.fade-out {
+    opacity: 0;
+}
+`;
+
+document.head.appendChild(notificationStyles);
