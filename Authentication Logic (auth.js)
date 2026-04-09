@@ -1,0 +1,103 @@
+// Simulated user database
+const users = [
+    { username: "admin", password: "admin123", name: "Admin User", role: "Administrator" },
+    { username: "user1", password: "password1", name: "John Doe", role: "Analyst" },
+    { username: "user2", password: "password2", name: "Jane Smith", role: "Viewer" }
+];
+
+// Check if user is logged in
+function checkAuth() {
+    const token = localStorage.getItem('authToken');
+    const currentPage = window.location.pathname.split('/').pop();
+    
+    if (token && currentPage === 'index.html') {
+        window.location.href = 'dashboard.html';
+    } else if (!token && currentPage === 'dashboard.html') {
+        window.location.href = 'index.html';
+    }
+}
+
+// Handle login form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const loginForm = document.getElementById('loginForm');
+    const logoutBtn = document.getElementById('logoutBtn');
+    
+    if (loginForm) {
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // Find user in database
+            const user = users.find(u => u.username === username && u.password === password);
+            
+            if (user) {
+                // Simulate token generation
+                const authToken = btoa(JSON.stringify({
+                    username: user.username,
+                    name: user.name,
+                    role: user.role,
+                    timestamp: new Date().getTime()
+                }));
+                
+                // Store token in localStorage
+                localStorage.setItem('authToken', authToken);
+                
+                // Redirect to dashboard
+                window.location.href = 'dashboard.html';
+            } else {
+                alert('Invalid username or password');
+            }
+        });
+    }
+    
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            localStorage.removeItem('authToken');
+            window.location.href = 'index.html';
+        });
+    }
+    
+    // Check authentication status on page load
+    checkAuth();
+    
+    // Load user profile if on dashboard
+    if (window.location.pathname.split('/').pop() === 'dashboard.html') {
+        loadUserProfile();
+    }
+});
+
+// Load user profile data
+function loadUserProfile() {
+    const token = localStorage.getItem('authToken');
+    
+    if (token) {
+        try {
+            const userData = JSON.parse(atob(token));
+            
+            // Update UI with user data
+            const usernameElement = document.querySelector('.username');
+            const userRoleElement = document.querySelector('.user-role');
+            const userAvatar = document.querySelector('.user-avatar');
+            
+            if (usernameElement) usernameElement.textContent = userData.name;
+            if (userRoleElement) userRoleElement.textContent = userData.role;
+            
+            // Generate avatar based on name initials
+            if (userAvatar) {
+                const initials = userData.name.split(' ').map(n => n[0]).join('');
+                userAvatar.alt = initials;
+                
+                // Create a colorful avatar background
+                const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'];
+                const color = colors[initials.charCodeAt(0) % colors.length];
+                
+                userAvatar.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><rect width="40" height="40" fill="${color}" rx="20"/><text x="20" y="25" font-family="Arial" font-size="16" fill="white" text-anchor="middle" dominant-baseline="middle">${initials}</text></svg>`;
+            }
+        } catch (e) {
+            console.error('Error parsing user data:', e);
+        }
+    }
+}
